@@ -109,6 +109,11 @@ int gen_http_get_response(struct tcp_pcb *pcb, char *req, int rlen)
 	int count = 0;
 	int select = 0; // 0 for index, 1 for other files (css, html, js, ...)
 
+	// FIXME: Should be done much better, quick try to check website grayscale threshold interaction
+	float r_flt, g_flt, b_flt;
+	int idx = 0;
+	//////////////////////////////////////
+
 	// in DDR a file with name "index.html" should be present (packed into a image.mfs and put into the MFS file system)
 	// e.g. dow -data image.mfs 0x500000
 
@@ -132,29 +137,107 @@ int gen_http_get_response(struct tcp_pcb *pcb, char *req, int rlen)
 		{
 			switch(ptr[8])
 			{
+				// Color
 				case '0':
 					bram_write((u32*)0x10000000, (u8*) 0, (COL_COUNT*ROW_COUNT)); // all channels
 					break;
 
+				// Grayscale
 				case '1':
-					rgb2gray((u32*)0x10000000, (u32*)0x11000000, COL_COUNT, ROW_COUNT, (u8*)0);
+					// call with standard threshold values
+					rgb2gray((u32*)0x10000000, (u32*)0x11000000, COL_COUNT, ROW_COUNT, (u8*)0, 0.299, 0.587, 0.114);
 					break;
 
+				// X-Gradient
 				case '2':
 					x_gradient((u32*)0x11000000, (u32*)0x11200000, COL_COUNT, ROW_COUNT, (u8*)0);
 					break;
 
+				// Y-Gradient
 				case '3':
 					y_gradient((u32*)0x11000000, (u32*)0x11100000, COL_COUNT, ROW_COUNT, (u8*)0);
 					break;
 
+				// Sobel Edge
 				case '4':
 					edge_detection((u32*)0x11100000, (u32*)0x11200000, (u32*)0x11300000, COL_COUNT, ROW_COUNT, (u8*)0);
 					break;
-
 				default:
 					break;
 			}
+		}
+		else
+		{
+			// FIXME: Should be done much better, quick try to check website grayscale threshold interaction
+			// Gray Scale
+			if(ptr[0] == 'R')
+			{
+				while(*ptr != '=')
+					ptr++;
+				ptr++; // pointing to Red float value now
+
+
+				while(*ptr != '&')
+				{
+					idx++; ptr++;
+				}
+
+				ptr = ptr-idx;// go back to the start of the value
+				char* r_str=NULL;
+				r_str = (char*)malloc(idx * sizeof(char));
+
+				for(int i=0; i<idx; i++)
+					r_str[i] = ptr[i];
+				idx = 0;
+				r_flt = atof(r_str);
+
+				ptr += idx; // skip the red, is processed now
+
+				///////////////////////////
+				while(*ptr != '=')
+					ptr++;
+				ptr++; // pointing to Green float value now
+
+
+				while(*ptr != '&')
+				{
+					idx++; ptr++;
+				}
+
+				ptr = ptr-idx;// go back to the start of the value
+				char* g_str=NULL;
+				g_str = (char*)malloc(idx * sizeof(char));
+
+				for(int i=0; i<idx; i++)
+					g_str[i] = ptr[i];
+				idx = 0;
+				g_flt = atof(g_str);
+
+				ptr += idx; // skip the green, is processed now
+
+				///////////////////////////
+				while(*ptr != '=')
+					ptr++;
+				ptr++; // pointing to Blue float value now
+
+
+				while(*ptr != '&')
+				{
+					idx++; ptr++;
+				}
+
+				ptr = ptr-idx;// go back to the start of the value
+				char* b_str=NULL;
+				b_str = (char*)malloc(idx * sizeof(char));
+
+				for(int i=0; i<idx; i++)
+					b_str[i] = ptr[i];
+				idx = 0;
+				b_flt = atof(b_str);
+
+				rgb2gray((u32*)0x10000000, (u32*)0x11000000, COL_COUNT, ROW_COUNT, (u8*)0, r_flt, g_flt, b_flt);
+			}
+			////////////////////////////////////////////////////////////////////////////////////////////////
 		}
 	}
 

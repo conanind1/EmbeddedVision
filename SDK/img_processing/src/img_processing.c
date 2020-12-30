@@ -60,7 +60,7 @@ void bram_read(u8* bram_src, u32* bram_dest, u32 numbytes, u8 withPrint)
  * u32 row_cnt			: row count of the image
  * u8* bram_addr_ptr	: Pointer to BRAM holding the calculated Gray values, VGA Controller will access them from BRAM.
  */
-void rgb2gray(u32* ddr_src, u32* ddr_dest, u32 col_cnt, u32 row_cnt, u8* bram_addr_ptr)
+void rgb2gray(u32* ddr_src, u32* ddr_dest, u32 col_cnt, u32 row_cnt, u8* bram_addr_ptr, float red_thrsh, float green_thrsh, float blue_thrsh)
 {
     u32 k, l, ruyacikVal, ruyacikRedVal, ruyacikGreenVal, ruyacikBlueVal, ruyacikGrayVal;
     u32 ruyacikGrayValLByte, ruyacikGrayValMByte, ruyacikGrayValHByte;
@@ -78,7 +78,8 @@ void rgb2gray(u32* ddr_src, u32* ddr_dest, u32 col_cnt, u32 row_cnt, u8* bram_ad
     		ruyacikGreenVal = (ruyacikVal & 0x0000FF00) >> 8;
     		ruyacikBlueVal = (ruyacikVal & 0x000000FF) >> 0;
     		// .299*redChannel + .587*greenChannel + .114*blueChannel
-    		ruyacikGrayVal = (0.299*ruyacikRedVal) + (0.587*ruyacikGreenVal) + (0.114*ruyacikBlueVal);
+    		//ruyacikGrayVal = (0.299*ruyacikRedVal) + (0.587*ruyacikGreenVal) + (0.114*ruyacikBlueVal);
+    		ruyacikGrayVal = (red_thrsh*ruyacikRedVal) + (green_thrsh*ruyacikGreenVal) + (blue_thrsh*ruyacikBlueVal);
     		// xil_printf("%d  ", ruyacikGrayVal);
     		ruyacikGrayValLByte = ruyacikGrayVal;
     		ruyacikGrayValMByte = ruyacikGrayVal << 8;

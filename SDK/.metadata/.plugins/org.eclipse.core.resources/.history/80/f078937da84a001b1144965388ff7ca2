@@ -1,0 +1,382 @@
+/*
+ * Copyright (c) 2007 Xilinx, Inc.  All rights reserved.
+ *
+ * Xilinx, Inc.
+ * XILINX IS PROVIDING THIS DESIGN, CODE, OR INFORMATION "AS IS" AS A
+ * COURTESY TO YOU.  BY PROVIDING THIS DESIGN, CODE, OR INFORMATION AS
+ * ONE POSSIBLE   IMPLEMENTATION OF THIS FEATURE, APPLICATION OR
+ * STANDARD, XILINX IS MAKING NO REPRESENTATION THAT THIS IMPLEMENTATION
+ * IS FREE FROM ANY CLAIMS OF INFRINGEMENT, AND YOU ARE RESPONSIBLE
+ * FOR OBTAINING ANY RIGHTS YOU MAY REQUIRE FOR YOUR IMPLEMENTATION.
+ * XILINX EXPRESSLY DISCLAIMS ANY WARRANTY WHATSOEVER WITH RESPECT TO
+ * THE ADEQUACY OF THE IMPLEMENTATION, INCLUDING BUT NOT LIMITED TO
+ * ANY WARRANTIES OR REPRESENTATIONS THAT THIS IMPLEMENTATION IS FREE
+ * FROM CLAIMS OF INFRINGEMENT, IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ */
+
+/* webserver.c: An example Webserver application using the RAW API
+ *	This program serves web pages resident on Xilinx Memory File
+ * System (MFS) using lwIP's RAW API. Use of RAW API implies that the
+ * webserver is blazingly fast, but the design is not obvious since a
+ * lot of the work happens in asynchronous callback functions.
+ *
+ * The webserver works as follows:
+ *	- on every accepted connection, only 1 read is performed to
+ * identify the file requested. Further reads are avoided by sending
+ * a "Connection: close" in the HTTP response header, as well as setting
+ * the callback function to NULL on that pcb
+ *	- the read determines what file needs to be set (by parsing
+ * "GET / HTTP/1.1" request
+ *	- once the file to be sent is determined, tcp_write is called
+ * in chunks of size tcp_sndbuf() until the whole file is sent
+ *
+ */
+
+#include <stdio.h>
+#include <string.h>
+
+#include "lwip/err.h"
+#include "lwip/tcp.h"
+
+#include "webserver.h"
+#include "helpers.h"
+#include "xparameters.h"
+
+static unsigned http_port = 80;
+
+enum http_req_type {
+	HTTP_GET,
+	HTTP_UNKNOWN
+};
+
+/* dynamically generate 404 response:
+ *	this inserts the original request string in betwween the notfound_header & footer strings
+ */
+int http_404(struct tcp_pcb *pcb, char *req, int rlen)
+{
+	int len, header_len;
+	int BUFSIZE = 1024;
+	char buf[BUFSIZE];
+	err_t err;
+	char *content_404 = NULL;
+
+	len = strlen(content_404) + rlen;
+
+	header_len = generate_http_header(buf, len, "html");
+
+	// PCB's available space for sending should be at least equal to HTTP header length
+	if (tcp_sndbuf(pcb) < header_len) {
+		return -1;
+	}
+
+	// Write the HTTP header to the PCB
+	if ((err = tcp_write(pcb, buf, header_len, 1)) != ERR_OK) {
+		return -1;
+	}
+
+	// Now write the website to PCB
+	content_404 =
+		"<html> \
+		<head> \
+			<title>404 Page</title> \
+		</head> \
+		<body> \
+		<h1>HTML 404 Page Not Found</h1> \
+		<h2>Check your MFS system, make sure that index.html is loaded into DDR</h2> \
+		</body> \
+		</html>";
+
+	tcp_write(pcb, content_404, strlen(content_404), 1);
+	return 0;
+}
+
+/*
+ *  Create response to a GET request
+ */
+int gen_http_get_response(struct tcp_pcb *pcb, char *req, int rlen)
+{
+	int BUFSIZE = 1400;
+	char *index[MAX_FILENAME] ;
+	unsigned char char_buf[BUFSIZE];
+	int file_size, header_len, num_bytes;
+	int fd;
+	int txbuf;
+	err_t err;
+	char* ptr = req;
+	char* fileType = "html"; // default
+	int count = 0;
+	int select = 0; // 0 for index, 1 for other files (css, html, js, ...)
+
+	// in DDR a file with name "index.html" should be present (packed into a image.mfs and put into the MFS file system)
+	// e.g. dow -data image.mfs 0x500000
+
+
+	*index = "index.html";
+
+	// pass GET /
+	while(*ptr != '/')
+		ptr++;
+	ptr++;
+
+
+	if(*ptr == 'i')
+	{
+		// get past ? char
+		while(*ptr != '?')
+			ptr++;
+		ptr++;
+
+		if(ptr[0] == 'a' && ptr[1] == 'c' && ptr[2] == 't' && ptr[3] == 'i' && ptr[4] == 'o' && ptr[5] == 'n')
+		{
+			switch(ptr[8])
+			{
+				// Color
+				case '0':
+					bram_write((u32*)0x10000000, (u8*) 0, (COL_COUNT*ROW_COUNT)); // all channels
+					break;
+
+				// Grayscale
+				case '1':
+					rgb2gray((u32*)0x10000000, (u32*)0x11000000, COL_COUNT, ROW_COUNT, (u8*)0);
+					break;
+
+				// X-Gradient
+				case '2':
+					x_gradient((u32*)0x11000000, (u32*)0x11200000, COL_COUNT, ROW_COUNT, (u8*)0);
+					break;
+
+				// Y-Gradient
+				case '3':
+					y_gradient((u32*)0x11000000, (u32*)0x11100000, COL_COUNT, ROW_COUNT, (u8*)0);
+					break;
+
+				// Sobel Edge
+				case '4':
+					edge_detection((u32*)0x11100000, (u32*)0x11200000, (u32*)0x11300000, COL_COUNT, ROW_COUNT, (u8*)0);
+					break;
+
+				// Grayscale Threshold
+				case '5':
+
+
+				default:
+					break;
+			}
+		}
+	}
+
+	// check if index.html exist in the File system, respond with 404 page if not found
+	if (mfs_exists_file("index.html") != 1)
+	{
+		http_404(pcb, req, rlen);
+		return -1;
+	}
+
+	// open the file for reading
+	fd = mfs_file_open(*index , MFS_MODE_READ);
+
+	// get the file size
+	file_size = mfs_file_lseek(fd, 0, MFS_SEEK_END);
+
+	/* write the http headers */
+	header_len = generate_http_header(char_buf, file_size, fileType);
+
+	// Write
+	if ((err = tcp_write(pcb, char_buf, header_len, 1)) != ERR_OK)
+		return -1;
+
+	/* now write the file */
+	while (file_size)
+	{
+		txbuf = tcp_sndbuf(pcb);
+
+		if (txbuf < BUFSIZE)
+		{
+			// not enough space in txbuf, send the remaining bytes when there is space
+			http_arg *http_args = (http_arg *)pcb->callback_arg;
+			http_args->fd = fd;
+			http_args->fsize = file_size;
+			return;
+		}
+
+		num_bytes = mfs_file_read(fd, char_buf, BUFSIZE);
+
+		if ((err = tcp_write(pcb, char_buf, num_bytes, 1)) != ERR_OK) {
+			break;
+		}
+
+		file_size -= num_bytes;
+	}
+
+	mfs_file_close(fd);
+
+	return 0;
+}
+
+enum http_req_type find_http_request(char *req, int l)
+{
+	char *get_str = "GET";
+
+	if (!strncmp(req, get_str, strlen(get_str)))
+		return HTTP_GET;
+
+	return HTTP_UNKNOWN;
+}
+
+/* generate and write out an appropriate response for the http request */
+/* 	this assumes that tcp_sndbuf is high enough to send atleast 1 packet */
+int generate_response(struct tcp_pcb *pcb, char *req, int req_len)
+{
+	enum http_req_type req_type = find_http_request(req, req_len);
+
+	switch(req_type)
+	{
+		case HTTP_GET:
+			return gen_http_get_response(pcb, req, req_len);
+
+		default:
+			return http_404(pcb, req, req_len);
+	}
+}
+
+err_t http_tx_success(void *arg, struct tcp_pcb *tpcb, u16_t len)
+{
+	int BUFSIZE = 1400, txbuf, numbytes;
+	char buf[BUFSIZE];
+	http_arg *http_args = (http_arg*)arg;
+
+	// clear the arguments since TPCB state is passed ESTABLISHED
+	// For more info, google TCP/IP State Transition Diagram (RFC793)
+	if (tpcb->state > ESTABLISHED)
+	{
+		if (http_args)
+		{
+			pfree_arg(http_args);
+			http_args = NULL;
+		}
+		tcp_close(tpcb);
+                return ERR_OK;
+	}
+
+	// Else check the arguments and see if more data to be sent
+	if (http_args->fd == -1 || http_args->fsize <= 0)
+		return ERR_OK;
+
+	// Else, more data to bent, read the file and send it
+	while (1)
+	{
+		txbuf = tcp_sndbuf(tpcb);
+		if (txbuf < BUFSIZE)
+			return ERR_OK;
+
+		// Read from
+		numbytes = mfs_file_read(http_args->fd, buf, BUFSIZE);
+		tcp_write(tpcb, buf, numbytes, 1);
+		http_args->fsize -= numbytes;
+
+		// Close the file, nothing to be sent
+		if (http_args->fsize <= 0)
+		{
+			mfs_file_close(http_args->fd);
+			http_args->fd = 0;
+			break;
+		}
+	}
+
+	return ERR_OK;
+}
+
+err_t http_rx(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
+{
+	http_arg *http_args = (http_arg*)arg;
+
+	// do not read the packet if we are not in ESTABLISHED state
+	// For more info, google TCP/IP State Transition Diagram (RFC793)
+	if (tpcb->state >= FIN_WAIT_1 && tpcb->state <= CLOSING)
+	{
+		if (http_args)
+		{
+			pfree_arg(http_args);
+			http_args = NULL;
+		}
+		tcp_close(tpcb);
+		return;
+	}
+	else if (tpcb->state > CLOSING)
+	{
+		return;
+	}
+
+	// payload read, acknowledge
+	tcp_recved(tpcb, p->len);
+
+	/* read and decode the incoming HTTP request (POST, GET, PUT, ...)
+	 * and generate response appropriately, if data to be sent are
+	 * not finished, notify the responsible callbacks
+	 */
+	generate_response(tpcb, p->payload, p->len);
+
+	// free received packet */
+	pbuf_free(p);
+
+	return ERR_OK;
+}
+
+err_t http_accept(void *arg, struct tcp_pcb *newpcb, err_t err)
+{
+	// Keep count of connections
+	tcp_arg(newpcb, (void*)palloc_arg());
+
+	// Register the callback to be used when this PCB receives data
+	tcp_recv(newpcb, http_rx);
+
+	// Register the callback to be used when this PCB when data is successfully sent
+	tcp_sent(newpcb, http_tx_success);
+
+	return ERR_OK;
+}
+
+int start_web_server()
+{
+	struct tcp_pcb *pcb;
+	err_t err;
+
+	// Create a new PCB
+	pcb = tcp_new();
+	if (!pcb)
+	{
+		xil_printf("Error creating PCB. Out of Memory\r\n");
+		return ERR_MEM;
+	}
+
+	// bind to http port 80
+	err = tcp_bind(pcb, IP_ADDR_ANY, http_port);
+	if (err != ERR_OK)
+	{
+		xil_printf("Unable to bind to port 80: err = %d\r\n", err);
+		return ERR_BUF;
+	}
+
+	// first callback
+	tcp_arg(pcb, NULL);
+
+	// listen for connections
+	pcb = tcp_listen(pcb);
+	if (!pcb)
+	{
+		xil_printf("Out of memory while tcp_listen\r\n");
+		return ERR_MEM;
+	}
+
+	// register callback to be used for incoming connections
+	tcp_accept(pcb, http_accept);
+
+	/****
+	 * WEB SERVER RUNNING AT THIS POINT
+	 ****/
+
+	return 0;
+}
+
