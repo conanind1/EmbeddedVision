@@ -1,0 +1,46 @@
+Copyright 1986-2018 Xilinx, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2018.2 (win64) Build 2258646 Thu Jun 14 20:03:12 MDT 2018
+| Date         : Wed Dec 30 08:20:13 2020
+| Host         : betu-nb-p1 running 64-bit major release  (build 9200)
+| Command      : report_drc -file top_drc_routed.rpt -pb top_drc_routed.pb -rpx top_drc_routed.rpx
+| Design       : top
+| Device       : xc7z020clg484-1
+| Speed File   : -1
+| Design State : Routed
+---------------------------------------------------------------------------------------------------
+
+Report DRC
+
+Table of Contents
+-----------------
+1. REPORT SUMMARY
+2. REPORT DETAILS
+
+1. REPORT SUMMARY
+-----------------
+            Netlist: netlist
+          Floorplan: design_1
+      Design limits: <entire design considered>
+           Ruledeck: default
+             Max violations: <unlimited>
+             Violations found: 2
++----------+----------+-------------------+------------+
+| Rule     | Severity | Description       | Violations |
++----------+----------+-------------------+------------+
+| PDRC-153 | Warning  | Gated clock check | 2          |
++----------+----------+-------------------+------------+
+
+2. REPORT DETAILS
+-----------------
+PDRC-153#1 Warning
+Gated clock check  
+Net system/bd_embVision_i/img_buffer_0/U0/img_buffer_v1_0_S00_AXI_inst/synth.img_buff_synth/DOUTB_RED_O_reg[7]_i_2_n_0 is a gated clock net sourced by a combinational pin system/bd_embVision_i/img_buffer_0/U0/img_buffer_v1_0_S00_AXI_inst/synth.img_buff_synth/DOUTB_RED_O_reg[7]_i_2/O, cell system/bd_embVision_i/img_buffer_0/U0/img_buffer_v1_0_S00_AXI_inst/synth.img_buff_synth/DOUTB_RED_O_reg[7]_i_2. This is not good design practice and will likely impact performance. For SLICE registers, for example, use the CE pin to control the loading of data.
+Related violations: <none>
+
+PDRC-153#2 Warning
+Gated clock check  
+Net system/bd_embVision_i/img_buffer_0/U0/img_buffer_v1_0_S00_AXI_inst/synth.img_buff_synth/ena_reg[11]_i_2_n_0 is a gated clock net sourced by a combinational pin system/bd_embVision_i/img_buffer_0/U0/img_buffer_v1_0_S00_AXI_inst/synth.img_buff_synth/ena_reg[11]_i_2/O, cell system/bd_embVision_i/img_buffer_0/U0/img_buffer_v1_0_S00_AXI_inst/synth.img_buff_synth/ena_reg[11]_i_2. This is not good design practice and will likely impact performance. For SLICE registers, for example, use the CE pin to control the loading of data.
+Related violations: <none>
+
+

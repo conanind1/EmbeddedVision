@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wave_config>
+   <wave_state>
+   </wave_state>
+   <db_ref_list>
+      <db_ref path="tb_vga_timing_ctrller_behav.wdb" id="1">
+         <top_modules>
+            <top_module name="tb_vga_timing_ctrller" />
+         </top_modules>
+      </db_ref>
+   </db_ref_list>
+   <zoom_setting>
+      <ZoomStartTime time="8198463333334fs"></ZoomStartTime>
+      <ZoomEndTime time="8448463333335fs"></ZoomEndTime>
+      <Cursor1Time time="8400130000000fs"></Cursor1Time>
+   </zoom_setting>
+   <column_width_setting>
+      <NameColumnWidth column_width="175"></NameColumnWidth>
+      <ValueColumnWidth column_width="173"></ValueColumnWidth>
+   </column_width_setting>
+   <WVObjectSize size="25" />
+   <wvobject fp_name="/tb_vga_timing_ctrller/tb_clk" type="logic">
+      <obj_property name="ElementShortName">tb_clk</obj_property>
+      <obj_property name="ObjectShortName">tb_clk</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_vga_timing_ctrller/tb" type="array">
+      <obj_property name="ElementShortName">tb</obj_property>
+      <obj_property name="ObjectShortName">tb</obj_property>
+   </wvobject>
+   <wvobject type="divider" fp_name="divider15">
+      <obj_property name="label">VGA_TIMING_CONTROLLER</obj_property>
+      <obj_property name="DisplayName">label</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_vga_timing_ctrller/dut/CLK" type="logic">
+      <obj_property name="ElementShortName">CLK</obj_property>
+      <obj_property name="ObjectShortName">CLK</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_vga_timing_ctrller/dut/RESET_N" type="logic">
+      <obj_property name="ElementShortName">RESET_N</obj_property>
+      <obj_property name="ObjectShortName">RESET_N</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_vga_timing_ctrller/dut/START_I" type="logic">
+      <obj_property name="ElementShortName">START_I</obj_property>
+      <obj_property name="ObjectShortName">START_I</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_vga_timing_ctrller/dut/STOP_I" type="logic">
+      <obj_property name="ElementShortName">STOP_I</obj_property>
+      <obj_property name="ObjectShortName">STOP_I</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_vga_timing_ctrller/dut/STANDALONE_DEBUG_I" type="logic">
+      <obj_property name="ElementShortName">STANDALONE_DEBUG_I</obj_property>
+      <obj_property name="ObjectShortName">STANDALONE_DEBUG_I</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_vga_timing_ctrller/dut/H_FRONT_PORCH_I" type="array">
+      <obj_property name="ElementShortName">H_FRONT_PORCH_I[4:0]</obj_property>
+      <obj_property name="ObjectShortName">H_FRONT_PORCH_I[4:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_vga_timing_ctrller/dut/H_SYNC_PULSE_I" type="array">
+      <obj_property name="ElementShortName">H_SYNC_PULSE_I[6:0]</obj_property>
+      <obj_property name="ObjectShortName">H_SYNC_PULSE_I[6:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_vga_timing_ctrller/dut/H_BACK_PORCH_I" type="array">
+      <obj_property name="ElementShortName">H_BACK_PORCH_I[5:0]</obj_property>
+      <obj_property name="ObjectShortName">H_BACK_PORCH_I[5:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_vga_timing_ctrller/dut/H_VISIBLE_I" type="array">
+      <obj_property name="ElementShortName">H_VISIBLE_I[13:0]</obj_property>
+      <obj_property name="ObjectShortName">H_VISIBLE_I[13:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_vga_timing_ctrller/dut/V_FRONT_PORCH_I" type="array">
+      <obj_property name="ElementShortName">V_FRONT_PORCH_I[4:0]</obj_property>
+      <obj_property name="ObjectShortName">V_FRONT_PORCH_I[4:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_vga_timing_ctrller/dut/V_SYNC_PULSE_I" type="array">
+      <obj_property name="ElementShortName">V_SYNC_PULSE_I[6:0]</obj_property>
+      <obj_property name="ObjectShortName">V_SYNC_PULSE_I[6:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_vga_timing_ctrller/dut/V_BACK_PORCH_I" type="array">
+      <obj_property name="ElementShortName">V_BACK_PORCH_I[5:0]</obj_property>
+      <obj_property name="ObjectShortName">V_BACK_PORCH_I[5:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_vga_timing_ctrller/dut/V_VISIBLE_I" type="array">
+      <obj_property name="ElementShortName">V_VISIBLE_I[13:0]</obj_property>
+      <obj_property name="ObjectShortName">V_VISIBLE_I[13:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_vga_timing_ctrller/dut/H_SYNC_O" type="logic">
+      <obj_property name="ElementShortName">H_SYNC_O</obj_property>
+      <obj_property name="ObjectShortName">H_SYNC_O</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_vga_timing_ctrller/dut/V_SYNC_O" type="logic">
+      <obj_property name="ElementShortName">V_SYNC_O</obj_property>
+      <obj_property name="ObjectShortName">V_SYNC_O</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_vga_timing_ctrller/dut/RED_O" type="array">
+      <obj_property name="ElementShortName">RED_O[3:0]</obj_property>
+      <obj_property name="ObjectShortName">RED_O[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_vga_timing_ctrller/dut/GREEN_O" type="array">
+      <obj_property name="ElementShortName">GREEN_O[3:0]</obj_property>
+      <obj_property name="ObjectShortName">GREEN_O[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_vga_timing_ctrller/dut/BLUE_O" type="array">
+      <obj_property name="ElementShortName">BLUE_O[3:0]</obj_property>
+      <obj_property name="ObjectShortName">BLUE_O[3:0]</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_vga_timing_ctrller/dut/TREADY_O" type="logic">
+      <obj_property name="ElementShortName">TREADY_O</obj_property>
+      <obj_property name="ObjectShortName">TREADY_O</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_vga_timing_ctrller/dut/TVALID_I" type="logic">
+      <obj_property name="ElementShortName">TVALID_I</obj_property>
+      <obj_property name="ObjectShortName">TVALID_I</obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_vga_timing_ctrller/dut/r" type="array">
+      <obj_property name="ElementShortName">r</obj_property>
+      <obj_property name="ObjectShortName">r</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+   </wvobject>
+   <wvobject fp_name="/tb_vga_timing_ctrller/dut/rin" type="array">
+      <obj_property name="ElementShortName">rin</obj_property>
+      <obj_property name="ObjectShortName">rin</obj_property>
+   </wvobject>
+</wave_config>

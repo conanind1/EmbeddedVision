@@ -1,0 +1,151 @@
+#########################################################################################################
+##	This is an example .gitignore file for Vivado, please treat it as an example as 
+##	it might not be complete.
+#########################################################################################################
+#########
+#Exclude all
+#########
+*
+!*/
+!ip_repo/*
+!hw_top/*
+!export/*
+!README.md
+!.gitignore
+###########################################################################
+##	VIVADO
+###########################################################################
+
+#########
+#Source files:
+#########
+#Do NOT ignore VHDL, Verilog, block diagrams or EDIF files.
+!*.vhd
+!*.v
+!*.bd
+!*.edif
+#########
+#config files:
+#########
+#Do NOT ignore .bit, .ltx and .mcs files.
+!*.bit
+!*.ltx
+!*.mcs
+
+
+#########
+#IP files
+#########
+#.xci: synthesis and implemented not possible - you need to return back to the previous version to generate output products
+#.xci + .dcp: implementation possible but not re-synthesis
+#*.xci(www.spiritconsortium.org)
+!*.xci
+#*.dcp(checkpoint files)
+!*.dcp
+!*.vds
+!*.pb
+#All bd comments and layout coordinates are stored within .ui
+!*.ui
+!*.ooc
+#########
+#System Generator
+#########
+!*.mdl
+!*.slx
+!*.bxml
+#########
+#Simulation logic analyzer
+#########
+!*.wcfg
+!*.coe
+#########
+#MIG
+#########
+!*.prj
+!*.mem
+#########
+#Project files
+#########
+#XPR  +  *.XML ? XPR (Files are merged into a single XPR file for 2014.1 version)
+#Do NOT ignore *.xpr files
+!*.xpr
+#Include *.xml files for 2013.4 or earlier version
+!*.xml
+#########
+#Constraint files
+#########
+#Do NOT ignore *.xdc files
+!*.xdc
+#########
+#TCL - files
+#########
+!*.tcl
+#########
+#Journal and Log - files(Excluded)
+#########
+*.jou
+*.log
+#########
+#Reports
+#########
+!*.rpt
+!*.txt
+!*.vdi
+#########
+#C-files
+#########
+!*.c
+!*.h
+!*.elf
+!*.bmm
+!*.xmp
+!*.html
+#########
+#SDK hardware defination file
+#########
+!*.hdf
+!*.mss
+!*.bit
+#########
+#sdk files:
+#########
+!hw_export/*
+!Doxyfile
+!*.cppcheck
+!**/src/**/*
+!**/bootimage/*
+!.cproject
+!.project
+!.sdkproject
+!Makefile
+!*.defs
+.metadata/*
+.sdk/*
+RemoteSystemsTempFiles/*
+webtalk/*
+**/Debug/
+**/doc/
+**/Release/
+**/.settings/
+fsbl/*
+fsbl_bsp/*
+#########
+#Vivado Project files:
+#########
+**/*.tmp/*
+**/*.xil/*
+**/*.srcs/*
+**/*.sim/*
+**/*.hw/*
+**/*.runs/*
+**/*.cache/*
+**/Packages/*
+
+#########
+#Block Design files:
+#########
+####Quick and Dirty Solution! Since Vivado can't open the BD, since it can't find interconnect component! Very strange
+!BD/**/ip/* 
+BD/**/ipshared/*
+BD/**/*.xdc
+BD/**/ui/*

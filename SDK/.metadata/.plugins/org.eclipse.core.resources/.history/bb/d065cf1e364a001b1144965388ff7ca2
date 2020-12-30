@@ -1,0 +1,640 @@
+/*
+ * Copyright (c) 2007 Xilinx, Inc.  All rights reserved.
+ *
+ * Xilinx, Inc.
+ * XILINX IS PROVIDING THIS DESIGN, CODE, OR INFORMATION "AS IS" AS A
+ * COURTESY TO YOU.  BY PROVIDING THIS DESIGN, CODE, OR INFORMATION AS
+ * ONE POSSIBLE   IMPLEMENTATION OF THIS FEATURE, APPLICATION OR
+ * STANDARD, XILINX IS MAKING NO REPRESENTATION THAT THIS IMPLEMENTATION
+ * IS FREE FROM ANY CLAIMS OF INFRINGEMENT, AND YOU ARE RESPONSIBLE
+ * FOR OBTAINING ANY RIGHTS YOU MAY REQUIRE FOR YOUR IMPLEMENTATION.
+ * XILINX EXPRESSLY DISCLAIMS ANY WARRANTY WHATSOEVER WITH RESPECT TO
+ * THE ADEQUACY OF THE IMPLEMENTATION, INCLUDING BUT NOT LIMITED TO
+ * ANY WARRANTIES OR REPRESENTATIONS THAT THIS IMPLEMENTATION IS FREE
+ * FROM CLAIMS OF INFRINGEMENT, IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS FOR A PARTICULAR PURPOSE.
+ *
+ */
+
+/* webserver.c: An example Webserver application using the RAW API
+ *	This program serves web pages resident on Xilinx Memory File
+ * System (MFS) using lwIP's RAW API. Use of RAW API implies that the
+ * webserver is blazingly fast, but the design is not obvious since a
+ * lot of the work happens in asynchronous callback functions.
+ *
+ * The webserver works as follows:
+ *	- on every accepted connection, only 1 read is performed to
+ * identify the file requested. Further reads are avoided by sending
+ * a "Connection: close" in the HTTP response header, as well as setting
+ * the callback function to NULL on that pcb
+ *	- the read determines what file needs to be set (by parsing
+ * "GET / HTTP/1.1" request
+ *	- once the file to be sent is determined, tcp_write is called
+ * in chunks of size tcp_sndbuf() until the whole file is sent
+ *
+ */
+
+#include <stdio.h>
+#include <string.h>
+
+#include "lwip/err.h"
+#include "lwip/tcp.h"
+
+#include "webserver.h"
+#include "helpers.h"
+
+static unsigned http_port = 80;
+
+enum http_req_type {
+	HTTP_GET,
+	HTTP_UNKNOWN
+};
+
+/*
+ * u32* ddr_src: 	 ptr to source address of DDR memory
+ * u8* bram_dest: 	 ptr to destination address in the BRAM
+ * u32 numbytes: Number of consecutive bytes to transfer from src to dest
+ */
+void bram_write(u32* ddr_src, u8* bram_dest, u32 numbytes)
+{
+	u32 i;
+	u32 ruyacikCfgVal, ruyacikDataVal;
+	for(i=0;i<numbytes;i++)
+	{
+		ruyacikCfgVal = (0x00010000 | (u32)bram_dest); // we, addr: 000
+
+		ruyacikDataVal = *ddr_src;
+		ruyacikDataVal = ruyacikDataVal & 0x00FFFFFF;
+
+		Xil_Out32( (XPAR_RUYACIK_BRAM_0_BASEADDR + 0x04), ruyacikCfgVal);
+		Xil_Out32( (XPAR_RUYACIK_BRAM_0_BASEADDR + 0x08), ruyacikDataVal);
+		ddr_src++; bram_dest++;
+	}
+}
+
+/*
+ * Block RAM read function, only Red channel is implemented
+ * For Green and Blue, HW change required
+ * u8* bram_src:  	 ptr to address of interest in the BRAM
+ * u32* bram_dest:	 ptr to DDR to put data from BRAM
+ * u32 numbytes: Number of consecutive bytes to read from the BRAM
+ * u8 withprint: Debug flag to print or not
+ */
+void bram_read(u8* bram_src, u32* bram_dest, u32 numbytes, u8 withPrint)
+{
+	u32 i;
+	u32 ruyacikCfgVal, ruyacikDataVal;
+	for(i=0;i<numbytes;i++)
+	{
+		ruyacikCfgVal = (0x00000000 | (u32)bram_src); // re, addr: 000
+		Xil_Out32( (XPAR_RUYACIK_BRAM_0_BASEADDR + 0x04), ruyacikCfgVal);
+		ruyacikDataVal = Xil_In32(XPAR_RUYACIK_BRAM_0_BASEADDR + 0x00);
+		*bram_dest = ruyacikDataVal;
+		xil_printf("%d\n\r", ruyacikDataVal);
+		bram_src++; bram_dest++;
+	}
+}
+
+/*
+ * RGB to Gray Conversion function, writing the results to DDR and BRAM.
+ * u32* ddr_src			: ptr to address in DDR, holding the source image (RGB pixels)
+ * u32* ddr_dest		: ptr to address in DDR, holding the calculated Gray values
+ * u32 col_cnt			: column count of the image
+ * u32 row_cnt			: row count of the image
+ * u8* bram_addr_ptr	: Pointer to BRAM holding the calculated Gray values, VGA Controller will access them from BRAM.
+ */
+void rgb2gray(u32* ddr_src, u32* ddr_dest, u32 col_cnt, u32 row_cnt, u8* bram_addr_ptr)
+{
+    u32 k, l, ruyacikVal, ruyacikRedVal, ruyacikGreenVal, ruyacikBlueVal, ruyacikGrayVal;
+    u32 ruyacikGrayValLByte, ruyacikGrayValMByte, ruyacikGrayValHByte;
+    u32* image_base_ptr = ddr_dest; // save the ddr_dest ptr for later saving op. ddr_dest area will be the working space on ddr
+
+    for(k=0; k<row_cnt; k++)
+    {
+    	// xil_printf("\n\r");
+    	for(l=0; l<col_cnt; l++)
+    	{
+    		ruyacikGrayVal = 0;
+    		// RGB to gray conversion
+    		ruyacikVal = *ddr_src;
+    		ruyacikRedVal = (ruyacikVal & 0x00FF0000) >> 16;
+    		ruyacikGreenVal = (ruyacikVal & 0x0000FF00) >> 8;
+    		ruyacikBlueVal = (ruyacikVal & 0x000000FF) >> 0;
+    		// .299*redChannel + .587*greenChannel + .114*blueChannel
+    		ruyacikGrayVal = (0.299*ruyacikRedVal) + (0.587*ruyacikGreenVal) + (0.114*ruyacikBlueVal);
+    		// xil_printf("%d  ", ruyacikGrayVal);
+    		ruyacikGrayValLByte = ruyacikGrayVal;
+    		ruyacikGrayValMByte = ruyacikGrayVal << 8;
+    		ruyacikGrayValHByte = ruyacikGrayVal << 16;
+    		ruyacikGrayVal = (ruyacikGrayValHByte | ruyacikGrayValMByte | ruyacikGrayValLByte);
+
+    		*ddr_dest = ruyacikGrayVal;
+    		ddr_src++; ddr_dest++;
+    	}
+    }
+
+    // Write the gray image to BRAM
+    bram_write(image_base_ptr, bram_addr_ptr, (col_cnt*row_cnt));
+}
+
+
+/*
+ * Detecting the vertical edges, writing the results to DDR and BRAM.
+ * u32* ddr_src			: ptr to address in DDR, holding the source image (Gray pixels)
+ * u32* ddr_dest		: ptr to address in DDR, holding the calculated vertical edges values
+ * u32 col_cnt			: column count of the image
+ * u32 row_cnt			: row count of the image
+ * u8* bram_addr_ptr	: Pointer to BRAM holding the calculated vertical edges, VGA Controller will access them from BRAM.
+ */
+void y_gradient(u32* ddr_src, u32* ddr_dest, u32 col_cnt, u32 row_cnt, u8* bram_addr_ptr)
+{
+    u32 ptl, ptm, ptr, pml, pmm, pmr, pbl, pbm, pbr;
+    s32 y_grad_pixel;
+    u32 ruyacikGrayValLByte, ruyacikGrayValMByte, ruyacikGrayValHByte;
+    u32 k,l;
+    u32* image_base_ptr = ddr_dest;
+    for(k=0; k<row_cnt; k++)
+    {
+    	for(l=0; l<col_cnt; l++)
+    	{
+    		if( (k>0) && (k<(row_cnt-1)) && (l>0) && (l<(col_cnt-1)) )
+    		{
+				ptl = *ddr_src & 0x000000FF;
+				ddr_src++;
+				ptm = *ddr_src & 0x000000FF;
+				ddr_src++;
+				ptr = *ddr_src & 0x000000FF;
+				ddr_src = ddr_src + col_cnt-2;
+				pml = *ddr_src & 0x000000FF;
+				ddr_src++;
+				pmm = *ddr_src & 0x000000FF;
+				ddr_src++;
+				pmr = *ddr_src & 0x000000FF;
+				ddr_src = ddr_src + col_cnt-2;
+				pbl = *ddr_src & 0x000000FF;
+				ddr_src++;
+				pbm = *ddr_src & 0x000000FF;
+				ddr_src++;
+				pbr = *ddr_src & 0x000000FF;
+				ddr_src = ddr_src - col_cnt - col_cnt - 2;
+
+				y_grad_pixel = 0;
+				y_grad_pixel = ptl + 0 - ptr + (2*pml) + 0 - (2*pmr) + pbl + 0 - pbr;
+
+				if(y_grad_pixel < 0)
+					y_grad_pixel = 0;
+				if(y_grad_pixel > 255)
+					y_grad_pixel = 255;
+				y_grad_pixel = y_grad_pixel & 0x000000FF;
+
+				//xil_printf("%d  ", x_grad_pixel);
+				ruyacikGrayValLByte = y_grad_pixel;
+				ruyacikGrayValMByte = y_grad_pixel << 8;
+				ruyacikGrayValHByte = y_grad_pixel << 16;
+				y_grad_pixel = (ruyacikGrayValHByte | ruyacikGrayValMByte | ruyacikGrayValLByte);
+				*ddr_dest = y_grad_pixel;
+				ddr_src++;ddr_dest++;
+    		}
+    		else
+    		{
+    			*ddr_dest = 0x00000000;
+    			ddr_src++;ddr_dest++;
+    		}
+    	}
+    	// xil_printf("\n\r");
+    }
+
+    // Write X-gradient image to BRAM, VGA Controller will take it from there
+    bram_write(image_base_ptr, bram_addr_ptr, (col_cnt*row_cnt));
+}
+
+
+
+/*
+ * Detecting the horizontal edges, writing the results to DDR and BRAM.
+ * u32* ddr_src			: ptr to address in DDR, holding the source image (Gray pixels)
+ * u32* ddr_dest		: ptr to address in DDR, holding the calculated horizontal edges values
+ * u32 col_cnt			: column count of the image
+ * u32 row_cnt			: row count of the image
+ * u8* bram_addr_ptr	: Pointer to BRAM holding the calculated horizontal edges, VGA Controller will access them from BRAM.
+ */
+void x_gradient(u32* ddr_src, u32* ddr_dest, u32 col_cnt, u32 row_cnt, u8* bram_addr_ptr)
+{
+    u32 ptl, ptm, ptr, pml, pmm, pmr, pbl, pbm, pbr;
+    s32 x_grad_pixel;
+    u32 ruyacikGrayValLByte, ruyacikGrayValMByte, ruyacikGrayValHByte;
+    u32 k,l;
+    u32* image_base_ptr = ddr_dest;
+    for(k=0; k<row_cnt; k++)
+    {
+    	for(l=0; l<col_cnt; l++)
+    	{
+    		if( (k>0) && (k<(row_cnt-1)) && (l>0) && (l<(col_cnt-1)) )
+    		{
+				ptl = *ddr_src & 0x000000FF;
+				ddr_src++;
+				ptm = *ddr_src & 0x000000FF;
+				ddr_src++;
+				ptr = *ddr_src & 0x000000FF;
+				ddr_src = ddr_src + col_cnt-2;
+				pml = *ddr_src & 0x000000FF;
+				ddr_src++;
+				pmm = *ddr_src & 0x000000FF;
+				ddr_src++;
+				pmr = *ddr_src & 0x000000FF;
+				ddr_src = ddr_src + col_cnt-2;
+				pbl = *ddr_src & 0x000000FF;
+				ddr_src++;
+				pbm = *ddr_src & 0x000000FF;
+				ddr_src++;
+				pbr = *ddr_src & 0x000000FF;
+				ddr_src = ddr_src - col_cnt - col_cnt - 2;
+
+				x_grad_pixel = 0;
+				x_grad_pixel = ptl + (2*ptm) + ptr + 0 + 0 + 0 - pbl - (2*pbm) - pbr;
+
+				if(x_grad_pixel < 0)
+					x_grad_pixel = 0;
+				if(x_grad_pixel > 255)
+					x_grad_pixel = 255;
+				x_grad_pixel = x_grad_pixel & 0x000000FF;
+
+				//xil_printf("%d  ", x_grad_pixel);
+				ruyacikGrayValLByte = x_grad_pixel;
+				ruyacikGrayValMByte = x_grad_pixel << 8;
+				ruyacikGrayValHByte = x_grad_pixel << 16;
+				x_grad_pixel = (ruyacikGrayValHByte | ruyacikGrayValMByte | ruyacikGrayValLByte);
+				*ddr_dest = x_grad_pixel;
+				ddr_src++;ddr_dest++;
+    		}
+    		else
+    		{
+    			*ddr_dest = 0x00000000;
+    			ddr_src++;ddr_dest++;
+    		}
+    	}
+    	// xil_printf("\n\r");
+    }
+
+    // Write X-gradient image to BRAM, VGA Controller will take it from there
+    bram_write(image_base_ptr, bram_addr_ptr, (col_cnt*row_cnt));
+}
+
+/*
+ * Detecting the horizontal edges, writing the results to DDR and BRAM.
+ * u32* ddr_src_xGrad   : ptr to address in DDR, holding the source image (X-gradient)
+ * u32* ddr_src_yGrad   : ptr to address in DDR, holding the source image (Y-gradient)
+ * u32* ddr_dest		: ptr to address in DDR, holding the calculated horizontal edges values
+ * u32 col_cnt			: column count of the image
+ * u32 row_cnt			: row count of the image
+ * u8* bram_addr_ptr	: Pointer to BRAM holding the calculated horizontal edges, VGA Controller will access them from BRAM.
+ */
+void edge_detection(u32* ddr_src_xGrad, u32* ddr_src_yGrad, u32* ddr_dest, u32 col_cnt, u32 row_cnt, u8* bram_addr_ptr)
+{
+	u32 k, l;
+	u32 edge_det_x, edge_det_y;
+	u32 edge_det, edge_det_pix;
+	u32* image_base_ptr = ddr_dest; // save it for later, this will be the src ptr for the BRAM
+	for(k=0; k<row_cnt; k++)
+	{
+		for(l=0; l<col_cnt; l++)
+		{
+			edge_det_x = ((*ddr_src_xGrad)&0x000000FF);
+			edge_det_y = ((*ddr_src_yGrad)&0x000000FF);
+			edge_det = edge_det_x + edge_det_y;
+			if(edge_det > 255)
+				edge_det = 255;
+
+			edge_det_pix = 0;
+			edge_det = edge_det & 0x000000FF;
+			edge_det_pix = (edge_det << 16) | (edge_det << 8) | edge_det;
+
+			*ddr_dest = edge_det_pix;
+			ddr_dest++;ddr_src_xGrad++; ddr_src_yGrad++;
+		}
+	}
+
+	// Write the edge detected image to BRAM, VGA Controller will take it from there
+	bram_write(image_base_ptr, bram_addr_ptr, (col_cnt*row_cnt));
+}
+
+/* dynamically generate 404 response:
+ *	this inserts the original request string in betwween the notfound_header & footer strings
+ */
+int http_404(struct tcp_pcb *pcb, char *req, int rlen)
+{
+	int len, header_len;
+	int BUFSIZE = 1024;
+	char buf[BUFSIZE];
+	err_t err;
+	char *content_404 = NULL;
+
+	len = strlen(content_404) + rlen;
+
+	header_len = generate_http_header(buf, len, "html");
+
+	// PCB's available space for sending should be at least equal to HTTP header length
+	if (tcp_sndbuf(pcb) < header_len) {
+		return -1;
+	}
+
+	// Write the HTTP header to the PCB
+	if ((err = tcp_write(pcb, buf, header_len, 1)) != ERR_OK) {
+		return -1;
+	}
+
+	// Now write the website to PCB
+	content_404 =
+		"<html> \
+		<head> \
+			<title>404 Page</title> \
+		</head> \
+		<body> \
+		<h1>HTML 404 Page Not Found</h1> \
+		<h2>Check your MFS system, make sure that index.html is loaded into DDR</h2> \
+		</body> \
+		</html>";
+
+	tcp_write(pcb, content_404, strlen(content_404), 1);
+	return 0;
+}
+
+/*
+ *  Create response to a GET request
+ */
+int gen_http_get_response(struct tcp_pcb *pcb, char *req, int rlen)
+{
+	int BUFSIZE = 1400;
+	char *index[MAX_FILENAME] ;
+	unsigned char char_buf[BUFSIZE];
+	int file_size, header_len, num_bytes;
+	int fd;
+	int txbuf;
+	err_t err;
+	char* ptr = req;
+	char* fileType = "html"; // default
+	int count = 0;
+	int select = 0; // 0 for index, 1 for other files (css, html, js, ...)
+
+	// in DDR a file with name "index.html" should be present (packed into a image.mfs and put into the MFS file system)
+	// e.g. dow -data image.mfs 0x500000
+
+
+	*index = "index.html";
+
+	// pass GET /
+	while(*ptr != '/')
+		ptr++;
+	ptr++;
+
+
+	if(*ptr == 'i')
+	{
+		// get past ? char
+		while(*ptr != '?')
+			ptr++;
+		ptr++;
+
+		if(ptr[0] == 'a' && ptr[1] == 'c' && ptr[2] == 't' && ptr[3] == 'i' && ptr[4] == 'o' && ptr[5] == 'n')
+		{
+			switch(ptr[8])
+			{
+				case '0':
+					bram_write((u32*)0x10000000, (u8*) 0, (COL_COUNT*ROW_COUNT)); // all channels
+					break;
+
+				case '1':
+					rgb2gray((u32*)0x10000000, (u32*)0x11000000, COL_COUNT, ROW_COUNT, (u8*)0);
+					break;
+
+				case '2':
+					x_gradient((u32*)0x11000000, (u32*)0x11200000, COL_COUNT, ROW_COUNT, (u8*)0);
+					break;
+
+				case '3':
+					y_gradient((u32*)0x11000000, (u32*)0x11100000, COL_COUNT, ROW_COUNT, (u8*)0);
+					break;
+
+				case '4':
+					edge_detection((u32*)0x11100000, (u32*)0x11200000, (u32*)0x11300000, COL_COUNT, ROW_COUNT, (u8*)0);
+					break;
+
+				default:
+					break;
+			}
+		}
+	}
+
+	// check if index.html exist in the File system, respond with 404 page if not found
+	if (mfs_exists_file("index.html") != 1)
+	{
+		http_404(pcb, req, rlen);
+		return -1;
+	}
+
+	// open the file for reading
+	fd = mfs_file_open(*index , MFS_MODE_READ);
+
+	// get the file size
+	file_size = mfs_file_lseek(fd, 0, MFS_SEEK_END);
+
+	/* write the http headers */
+	header_len = generate_http_header(char_buf, file_size, fileType);
+
+	// Write
+	if ((err = tcp_write(pcb, char_buf, header_len, 1)) != ERR_OK)
+		return -1;
+
+	/* now write the file */
+	while (file_size)
+	{
+		txbuf = tcp_sndbuf(pcb);
+
+		if (txbuf < BUFSIZE)
+		{
+			// not enough space in txbuf, send the remaining bytes when there is space
+			http_arg *http_args = (http_arg *)pcb->callback_arg;
+			http_args->fd = fd;
+			http_args->fsize = file_size;
+			return;
+		}
+
+		num_bytes = mfs_file_read(fd, char_buf, BUFSIZE);
+
+		if ((err = tcp_write(pcb, char_buf, num_bytes, 1)) != ERR_OK) {
+			break;
+		}
+
+		file_size -= num_bytes;
+	}
+
+	mfs_file_close(fd);
+
+	return 0;
+}
+
+enum http_req_type find_http_request(char *req, int l)
+{
+	char *get_str = "GET";
+
+	if (!strncmp(req, get_str, strlen(get_str)))
+		return HTTP_GET;
+
+	return HTTP_UNKNOWN;
+}
+
+/* generate and write out an appropriate response for the http request */
+/* 	this assumes that tcp_sndbuf is high enough to send atleast 1 packet */
+int generate_response(struct tcp_pcb *pcb, char *req, int req_len)
+{
+	enum http_req_type req_type = find_http_request(req, req_len);
+
+	switch(req_type)
+	{
+		case HTTP_GET:
+			return gen_http_get_response(pcb, req, req_len);
+
+		default:
+			return http_404(pcb, req, req_len);
+	}
+}
+
+err_t http_tx_success(void *arg, struct tcp_pcb *tpcb, u16_t len)
+{
+	int BUFSIZE = 1400, txbuf, numbytes;
+	char buf[BUFSIZE];
+	http_arg *http_args = (http_arg*)arg;
+
+	// clear the arguments since TPCB state is passed ESTABLISHED
+	// For more info, google TCP/IP State Transition Diagram (RFC793)
+	if (tpcb->state > ESTABLISHED)
+	{
+		if (http_args)
+		{
+			pfree_arg(http_args);
+			http_args = NULL;
+		}
+		tcp_close(tpcb);
+                return ERR_OK;
+	}
+
+	// Else check the arguments and see if more data to be sent
+	if (http_args->fd == -1 || http_args->fsize <= 0)
+		return ERR_OK;
+
+	// Else, more data to bent, read the file and send it
+	while (1)
+	{
+		txbuf = tcp_sndbuf(tpcb);
+		if (txbuf < BUFSIZE)
+			return ERR_OK;
+
+		// Read from
+		numbytes = mfs_file_read(http_args->fd, buf, BUFSIZE);
+		tcp_write(tpcb, buf, numbytes, 1);
+		http_args->fsize -= numbytes;
+
+		// Close the file, nothing to be sent
+		if (http_args->fsize <= 0)
+		{
+			mfs_file_close(http_args->fd);
+			http_args->fd = 0;
+			break;
+		}
+	}
+
+	return ERR_OK;
+}
+
+err_t http_rx(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
+{
+	http_arg *http_args = (http_arg*)arg;
+
+	// do not read the packet if we are not in ESTABLISHED state
+	// For more info, google TCP/IP State Transition Diagram (RFC793)
+	if (tpcb->state >= FIN_WAIT_1 && tpcb->state <= CLOSING)
+	{
+		if (http_args)
+		{
+			pfree_arg(http_args);
+			http_args = NULL;
+		}
+		tcp_close(tpcb);
+		return;
+	}
+	else if (tpcb->state > CLOSING)
+	{
+		return;
+	}
+
+	// payload read, acknowledge
+	tcp_recved(tpcb, p->len);
+
+	/* read and decode the incoming HTTP request (POST, GET, PUT, ...)
+	 * and generate response appropriately, if data to be sent are
+	 * not finished, notify the responsible callbacks
+	 */
+	generate_response(tpcb, p->payload, p->len);
+
+	// free received packet */
+	pbuf_free(p);
+
+	return ERR_OK;
+}
+
+err_t http_accept(void *arg, struct tcp_pcb *newpcb, err_t err)
+{
+	// Keep count of connections
+	tcp_arg(newpcb, (void*)palloc_arg());
+
+	// Register the callback to be used when this PCB receives data
+	tcp_recv(newpcb, http_rx);
+
+	// Register the callback to be used when this PCB when data is successfully sent
+	tcp_sent(newpcb, http_tx_success);
+
+	return ERR_OK;
+}
+
+int start_web_server()
+{
+	struct tcp_pcb *pcb;
+	err_t err;
+
+	// Create a new PCB
+	pcb = tcp_new();
+	if (!pcb)
+	{
+		xil_printf("Error creating PCB. Out of Memory\r\n");
+		return ERR_MEM;
+	}
+
+	// bind to http port 80
+	err = tcp_bind(pcb, IP_ADDR_ANY, http_port);
+	if (err != ERR_OK)
+	{
+		xil_printf("Unable to bind to port 80: err = %d\r\n", err);
+		return ERR_BUF;
+	}
+
+	// first callback
+	tcp_arg(pcb, NULL);
+
+	// listen for connections
+	pcb = tcp_listen(pcb);
+	if (!pcb)
+	{
+		xil_printf("Out of memory while tcp_listen\r\n");
+		return ERR_MEM;
+	}
+
+	// register callback to be used for incoming connections
+	tcp_accept(pcb, http_accept);
+
+	/****
+	 * WEB SERVER RUNNING AT THIS POINT
+	 ****/
+
+	return 0;
+}
+
