@@ -236,7 +236,6 @@ int gen_http_get_response(struct tcp_pcb *pcb, char *req, int rlen)
 					b_str[i] = ptr[i];
 				idx = 0;
 				b_flt = atof(b_str);
-				free(b_str);
 
 				rgb2gray((u32*)0x10000000, (u32*)0x11000000, COL_COUNT, ROW_COUNT, (u8*)0, r_flt, g_flt, b_flt);
 			}

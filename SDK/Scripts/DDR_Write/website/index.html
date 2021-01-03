@@ -2,7 +2,12 @@
 <html lang="en" class="no-js">
 
 <head>
-
+	<script>
+		function grayFunction()
+		{
+			return false;
+		}
+	</script>
 </head>
 
 <body>
@@ -17,7 +22,7 @@
 
 <br></br>
 
-<form action="index.html" method="get">
+<form action="index.html" method="get" onsubmit="grayFunction()">
 	<label for="R_Gray">R_Gray:</label>
 	<input type="text" name="R_Gray" id="R_Gray">
 	<label for="G_Gray">G_Gray:</label>

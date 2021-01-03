@@ -1571,3 +1571,274 @@ con
 ----------------End of Script----------------
 
 16:33:47 INFO  : Launch script is exported to file 'C:\Projects\EmbeddedVision\SDK\.sdk\launch_scripts\xilinx_c-c++_application_(system_debugger)\system_debugger_using_debug_img_processing.elf_on_local.tcl'
+00:18:08 INFO  : Connected to target on host '127.0.0.1' and port '3121'.
+00:18:08 INFO  : 'targets -set -filter {jtag_cable_name =~ "Digilent Zed 210248781021" && level==0} -index 1' command is executed.
+00:18:11 INFO  : FPGA configured successfully with bitstream "C:/Projects/EmbeddedVision/hw_export/top.bit"
+00:18:19 INFO  : Disconnected from the channel tcfchan#33.
+00:18:20 INFO  : 'targets -set -filter {jtag_cable_name =~ "Digilent Zed 210248781021" && level==0} -index 1' command is executed.
+00:18:20 INFO  : 'fpga -state' command is executed.
+00:18:20 INFO  : Connected to target on host '127.0.0.1' and port '3121'.
+00:18:20 INFO  : Jtag cable 'Digilent Zed 210248781021' is selected.
+00:18:20 INFO  : 'jtag frequency' command is executed.
+00:18:20 INFO  : Sourcing of 'C:/Projects/EmbeddedVision/hw_export/ps7_init.tcl' is done.
+00:18:20 INFO  : Context for 'APU' is selected.
+00:18:20 INFO  : Hardware design information is loaded from 'C:/Projects/EmbeddedVision/hw_export/system.hdf'.
+00:18:20 INFO  : 'configparams force-mem-access 1' command is executed.
+00:18:20 INFO  : Context for 'APU' is selected.
+00:18:21 INFO  : 'stop' command is executed.
+00:18:21 INFO  : 'ps7_init' command is executed.
+00:18:21 INFO  : 'ps7_post_config' command is executed.
+00:18:21 INFO  : Context for processor 'ps7_cortexa9_0' is selected.
+00:18:21 INFO  : Processor reset is completed for 'ps7_cortexa9_0'.
+00:18:21 INFO  : Context for processor 'ps7_cortexa9_0' is selected.
+00:18:21 INFO  : The application 'C:/Projects/EmbeddedVision/SDK/img_processing/Debug/img_processing.elf' is downloaded to processor 'ps7_cortexa9_0'.
+00:18:21 INFO  : 'configparams force-mem-access 0' command is executed.
+00:18:21 INFO  : ----------------XSDB Script----------------
+connect -url tcp:127.0.0.1:3121
+source C:/Projects/EmbeddedVision/hw_export/ps7_init.tcl
+targets -set -nocase -filter {name =~"APU*" && jtag_cable_name =~ "Digilent Zed 210248781021"} -index 0
+loadhw -hw C:/Projects/EmbeddedVision/hw_export/system.hdf -mem-ranges [list {0x40000000 0xbfffffff}]
+configparams force-mem-access 1
+targets -set -nocase -filter {name =~"APU*" && jtag_cable_name =~ "Digilent Zed 210248781021"} -index 0
+stop
+ps7_init
+ps7_post_config
+targets -set -nocase -filter {name =~ "ARM*#0" && jtag_cable_name =~ "Digilent Zed 210248781021"} -index 0
+rst -processor
+targets -set -nocase -filter {name =~ "ARM*#0" && jtag_cable_name =~ "Digilent Zed 210248781021"} -index 0
+dow C:/Projects/EmbeddedVision/SDK/img_processing/Debug/img_processing.elf
+configparams force-mem-access 0
+----------------End of Script----------------
+
+00:18:21 INFO  : Memory regions updated for context APU
+00:18:21 INFO  : Context for processor 'ps7_cortexa9_0' is selected.
+00:18:21 INFO  : 'con' command is executed.
+00:18:21 INFO  : ----------------XSDB Script (After Launch)----------------
+targets -set -nocase -filter {name =~ "ARM*#0" && jtag_cable_name =~ "Digilent Zed 210248781021"} -index 0
+con
+----------------End of Script----------------
+
+00:18:21 INFO  : Launch script is exported to file 'C:\Projects\EmbeddedVision\SDK\.sdk\launch_scripts\xilinx_c-c++_application_(system_debugger)\system_debugger_using_debug_img_processing.elf_on_local.tcl'
+00:20:25 INFO  : Disconnected from the channel tcfchan#34.
+00:20:26 INFO  : 'targets -set -filter {jtag_cable_name =~ "Digilent Zed 210248781021" && level==0} -index 1' command is executed.
+00:20:26 INFO  : 'fpga -state' command is executed.
+00:20:26 INFO  : Connected to target on host '127.0.0.1' and port '3121'.
+00:20:26 INFO  : Jtag cable 'Digilent Zed 210248781021' is selected.
+00:20:26 INFO  : 'jtag frequency' command is executed.
+00:20:26 INFO  : Sourcing of 'C:/Projects/EmbeddedVision/hw_export/ps7_init.tcl' is done.
+00:20:26 INFO  : Context for 'APU' is selected.
+00:20:26 INFO  : Hardware design information is loaded from 'C:/Projects/EmbeddedVision/hw_export/system.hdf'.
+00:20:26 INFO  : 'configparams force-mem-access 1' command is executed.
+00:20:26 INFO  : Context for 'APU' is selected.
+00:20:26 INFO  : 'stop' command is executed.
+00:20:27 INFO  : 'ps7_init' command is executed.
+00:20:27 INFO  : 'ps7_post_config' command is executed.
+00:20:27 INFO  : Context for processor 'ps7_cortexa9_0' is selected.
+00:20:27 INFO  : Processor reset is completed for 'ps7_cortexa9_0'.
+00:20:27 INFO  : Context for processor 'ps7_cortexa9_0' is selected.
+00:20:27 INFO  : The application 'C:/Projects/EmbeddedVision/SDK/img_processing/Debug/img_processing.elf' is downloaded to processor 'ps7_cortexa9_0'.
+00:20:27 INFO  : 'configparams force-mem-access 0' command is executed.
+00:20:27 INFO  : ----------------XSDB Script----------------
+connect -url tcp:127.0.0.1:3121
+source C:/Projects/EmbeddedVision/hw_export/ps7_init.tcl
+targets -set -nocase -filter {name =~"APU*" && jtag_cable_name =~ "Digilent Zed 210248781021"} -index 0
+loadhw -hw C:/Projects/EmbeddedVision/hw_export/system.hdf -mem-ranges [list {0x40000000 0xbfffffff}]
+configparams force-mem-access 1
+targets -set -nocase -filter {name =~"APU*" && jtag_cable_name =~ "Digilent Zed 210248781021"} -index 0
+stop
+ps7_init
+ps7_post_config
+targets -set -nocase -filter {name =~ "ARM*#0" && jtag_cable_name =~ "Digilent Zed 210248781021"} -index 0
+rst -processor
+targets -set -nocase -filter {name =~ "ARM*#0" && jtag_cable_name =~ "Digilent Zed 210248781021"} -index 0
+dow C:/Projects/EmbeddedVision/SDK/img_processing/Debug/img_processing.elf
+configparams force-mem-access 0
+----------------End of Script----------------
+
+00:20:27 INFO  : Memory regions updated for context APU
+00:20:27 INFO  : Context for processor 'ps7_cortexa9_0' is selected.
+00:20:27 INFO  : 'con' command is executed.
+00:20:27 INFO  : ----------------XSDB Script (After Launch)----------------
+targets -set -nocase -filter {name =~ "ARM*#0" && jtag_cable_name =~ "Digilent Zed 210248781021"} -index 0
+con
+----------------End of Script----------------
+
+00:20:27 INFO  : Launch script is exported to file 'C:\Projects\EmbeddedVision\SDK\.sdk\launch_scripts\xilinx_c-c++_application_(system_debugger)\system_debugger_using_debug_img_processing.elf_on_local.tcl'
+00:20:55 INFO  : Connected to target on host '127.0.0.1' and port '3121'.
+00:20:55 INFO  : 'targets -set -filter {jtag_cable_name =~ "Digilent Zed 210248781021" && level==0} -index 1' command is executed.
+00:20:57 INFO  : FPGA configured successfully with bitstream "C:/Projects/EmbeddedVision/hw_export/top.bit"
+00:21:03 INFO  : Disconnected from the channel tcfchan#35.
+00:21:04 INFO  : 'targets -set -filter {jtag_cable_name =~ "Digilent Zed 210248781021" && level==0} -index 1' command is executed.
+00:21:04 INFO  : 'fpga -state' command is executed.
+00:21:04 INFO  : Connected to target on host '127.0.0.1' and port '3121'.
+00:21:04 INFO  : Jtag cable 'Digilent Zed 210248781021' is selected.
+00:21:04 INFO  : 'jtag frequency' command is executed.
+00:21:04 INFO  : Sourcing of 'C:/Projects/EmbeddedVision/hw_export/ps7_init.tcl' is done.
+00:21:04 INFO  : Context for 'APU' is selected.
+00:21:05 INFO  : Hardware design information is loaded from 'C:/Projects/EmbeddedVision/hw_export/system.hdf'.
+00:21:05 INFO  : 'configparams force-mem-access 1' command is executed.
+00:21:05 INFO  : Context for 'APU' is selected.
+00:21:05 INFO  : 'stop' command is executed.
+00:21:06 INFO  : 'ps7_init' command is executed.
+00:21:06 INFO  : 'ps7_post_config' command is executed.
+00:21:06 INFO  : Context for processor 'ps7_cortexa9_0' is selected.
+00:21:06 INFO  : Processor reset is completed for 'ps7_cortexa9_0'.
+00:21:06 INFO  : Context for processor 'ps7_cortexa9_0' is selected.
+00:21:08 ERROR : Memory write error at 0x100000. AP transaction timeout
+00:21:08 INFO  : ----------------XSDB Script----------------
+connect -url tcp:127.0.0.1:3121
+source C:/Projects/EmbeddedVision/hw_export/ps7_init.tcl
+targets -set -nocase -filter {name =~"APU*" && jtag_cable_name =~ "Digilent Zed 210248781021"} -index 0
+loadhw -hw C:/Projects/EmbeddedVision/hw_export/system.hdf -mem-ranges [list {0x40000000 0xbfffffff}]
+configparams force-mem-access 1
+targets -set -nocase -filter {name =~"APU*" && jtag_cable_name =~ "Digilent Zed 210248781021"} -index 0
+stop
+ps7_init
+ps7_post_config
+targets -set -nocase -filter {name =~ "ARM*#0" && jtag_cable_name =~ "Digilent Zed 210248781021"} -index 0
+rst -processor
+targets -set -nocase -filter {name =~ "ARM*#0" && jtag_cable_name =~ "Digilent Zed 210248781021"} -index 0
+dow C:/Projects/EmbeddedVision/SDK/img_processing/Debug/img_processing.elf
+----------------End of Script----------------
+
+00:21:18 INFO  : Connected to target on host '127.0.0.1' and port '3121'.
+00:21:31 INFO  : Connected to target on host '127.0.0.1' and port '3121'.
+00:21:31 INFO  : 'targets -set -filter {jtag_cable_name =~ "Digilent Zed 210248781021" && level==0} -index 1' command is executed.
+00:21:33 INFO  : FPGA configured successfully with bitstream "C:/Projects/EmbeddedVision/hw_export/top.bit"
+00:21:37 INFO  : 'targets -set -filter {jtag_cable_name =~ "Digilent Zed 210248781021" && level==0} -index 1' command is executed.
+00:21:37 INFO  : 'fpga -state' command is executed.
+00:21:37 INFO  : Connected to target on host '127.0.0.1' and port '3121'.
+00:21:37 INFO  : Jtag cable 'Digilent Zed 210248781021' is selected.
+00:21:37 INFO  : 'jtag frequency' command is executed.
+00:21:37 INFO  : Sourcing of 'C:/Projects/EmbeddedVision/hw_export/ps7_init.tcl' is done.
+00:21:37 INFO  : Context for 'APU' is selected.
+00:21:37 INFO  : Hardware design information is loaded from 'C:/Projects/EmbeddedVision/hw_export/system.hdf'.
+00:21:37 INFO  : 'configparams force-mem-access 1' command is executed.
+00:21:37 INFO  : Context for 'APU' is selected.
+00:21:37 INFO  : 'stop' command is executed.
+00:21:37 INFO  : 'ps7_init' command is executed.
+00:21:37 INFO  : 'ps7_post_config' command is executed.
+00:21:37 INFO  : Context for processor 'ps7_cortexa9_0' is selected.
+00:21:37 INFO  : Processor reset is completed for 'ps7_cortexa9_0'.
+00:21:37 INFO  : Context for processor 'ps7_cortexa9_0' is selected.
+00:21:38 INFO  : The application 'C:/Projects/EmbeddedVision/SDK/img_processing/Debug/img_processing.elf' is downloaded to processor 'ps7_cortexa9_0'.
+00:21:38 INFO  : 'configparams force-mem-access 0' command is executed.
+00:21:38 INFO  : ----------------XSDB Script----------------
+connect -url tcp:127.0.0.1:3121
+source C:/Projects/EmbeddedVision/hw_export/ps7_init.tcl
+targets -set -nocase -filter {name =~"APU*" && jtag_cable_name =~ "Digilent Zed 210248781021"} -index 0
+loadhw -hw C:/Projects/EmbeddedVision/hw_export/system.hdf -mem-ranges [list {0x40000000 0xbfffffff}]
+configparams force-mem-access 1
+targets -set -nocase -filter {name =~"APU*" && jtag_cable_name =~ "Digilent Zed 210248781021"} -index 0
+stop
+ps7_init
+ps7_post_config
+targets -set -nocase -filter {name =~ "ARM*#0" && jtag_cable_name =~ "Digilent Zed 210248781021"} -index 0
+rst -processor
+targets -set -nocase -filter {name =~ "ARM*#0" && jtag_cable_name =~ "Digilent Zed 210248781021"} -index 0
+dow C:/Projects/EmbeddedVision/SDK/img_processing/Debug/img_processing.elf
+configparams force-mem-access 0
+----------------End of Script----------------
+
+00:21:38 INFO  : Memory regions updated for context APU
+00:21:38 INFO  : Context for processor 'ps7_cortexa9_0' is selected.
+00:21:38 INFO  : 'con' command is executed.
+00:21:38 INFO  : ----------------XSDB Script (After Launch)----------------
+targets -set -nocase -filter {name =~ "ARM*#0" && jtag_cable_name =~ "Digilent Zed 210248781021"} -index 0
+con
+----------------End of Script----------------
+
+00:21:38 INFO  : Launch script is exported to file 'C:\Projects\EmbeddedVision\SDK\.sdk\launch_scripts\xilinx_c-c++_application_(system_debugger)\system_debugger_using_debug_img_processing.elf_on_local.tcl'
+00:23:19 INFO  : Disconnected from the channel tcfchan#36.
+00:23:20 INFO  : 'targets -set -filter {jtag_cable_name =~ "Digilent Zed 210248781021" && level==0} -index 1' command is executed.
+00:23:21 INFO  : 'fpga -state' command is executed.
+00:23:21 INFO  : Connected to target on host '127.0.0.1' and port '3121'.
+00:23:21 INFO  : Jtag cable 'Digilent Zed 210248781021' is selected.
+00:23:21 INFO  : 'jtag frequency' command is executed.
+00:23:21 INFO  : Sourcing of 'C:/Projects/EmbeddedVision/hw_export/ps7_init.tcl' is done.
+00:23:21 INFO  : Context for 'APU' is selected.
+00:23:21 INFO  : Hardware design information is loaded from 'C:/Projects/EmbeddedVision/hw_export/system.hdf'.
+00:23:21 INFO  : 'configparams force-mem-access 1' command is executed.
+00:23:21 INFO  : Context for 'APU' is selected.
+00:23:21 INFO  : 'stop' command is executed.
+00:23:21 INFO  : 'ps7_init' command is executed.
+00:23:21 INFO  : 'ps7_post_config' command is executed.
+00:23:21 INFO  : Context for processor 'ps7_cortexa9_0' is selected.
+00:23:21 INFO  : Processor reset is completed for 'ps7_cortexa9_0'.
+00:23:21 INFO  : Context for processor 'ps7_cortexa9_0' is selected.
+00:23:22 INFO  : The application 'C:/Projects/EmbeddedVision/SDK/img_processing/Debug/img_processing.elf' is downloaded to processor 'ps7_cortexa9_0'.
+00:23:22 INFO  : 'configparams force-mem-access 0' command is executed.
+00:23:22 INFO  : ----------------XSDB Script----------------
+connect -url tcp:127.0.0.1:3121
+source C:/Projects/EmbeddedVision/hw_export/ps7_init.tcl
+targets -set -nocase -filter {name =~"APU*" && jtag_cable_name =~ "Digilent Zed 210248781021"} -index 0
+loadhw -hw C:/Projects/EmbeddedVision/hw_export/system.hdf -mem-ranges [list {0x40000000 0xbfffffff}]
+configparams force-mem-access 1
+targets -set -nocase -filter {name =~"APU*" && jtag_cable_name =~ "Digilent Zed 210248781021"} -index 0
+stop
+ps7_init
+ps7_post_config
+targets -set -nocase -filter {name =~ "ARM*#0" && jtag_cable_name =~ "Digilent Zed 210248781021"} -index 0
+rst -processor
+targets -set -nocase -filter {name =~ "ARM*#0" && jtag_cable_name =~ "Digilent Zed 210248781021"} -index 0
+dow C:/Projects/EmbeddedVision/SDK/img_processing/Debug/img_processing.elf
+configparams force-mem-access 0
+----------------End of Script----------------
+
+00:23:22 INFO  : Memory regions updated for context APU
+00:23:22 INFO  : Context for processor 'ps7_cortexa9_0' is selected.
+00:23:22 INFO  : 'con' command is executed.
+00:23:22 INFO  : ----------------XSDB Script (After Launch)----------------
+targets -set -nocase -filter {name =~ "ARM*#0" && jtag_cable_name =~ "Digilent Zed 210248781021"} -index 0
+con
+----------------End of Script----------------
+
+00:23:22 INFO  : Launch script is exported to file 'C:\Projects\EmbeddedVision\SDK\.sdk\launch_scripts\xilinx_c-c++_application_(system_debugger)\system_debugger_using_debug_img_processing.elf_on_local.tcl'
+00:25:06 INFO  : Connected to target on host '127.0.0.1' and port '3121'.
+00:25:06 INFO  : 'targets -set -filter {jtag_cable_name =~ "Digilent Zed 210248781021" && level==0} -index 1' command is executed.
+00:25:08 INFO  : FPGA configured successfully with bitstream "C:/Projects/EmbeddedVision/hw_export/top.bit"
+00:25:13 INFO  : Disconnected from the channel tcfchan#37.
+00:25:14 INFO  : 'targets -set -filter {jtag_cable_name =~ "Digilent Zed 210248781021" && level==0} -index 1' command is executed.
+00:25:14 INFO  : 'fpga -state' command is executed.
+00:25:14 INFO  : Connected to target on host '127.0.0.1' and port '3121'.
+00:25:14 INFO  : Jtag cable 'Digilent Zed 210248781021' is selected.
+00:25:14 INFO  : 'jtag frequency' command is executed.
+00:25:14 INFO  : Sourcing of 'C:/Projects/EmbeddedVision/hw_export/ps7_init.tcl' is done.
+00:25:14 INFO  : Context for 'APU' is selected.
+00:25:14 INFO  : Hardware design information is loaded from 'C:/Projects/EmbeddedVision/hw_export/system.hdf'.
+00:25:14 INFO  : 'configparams force-mem-access 1' command is executed.
+00:25:14 INFO  : Context for 'APU' is selected.
+00:25:14 INFO  : 'stop' command is executed.
+00:25:15 INFO  : 'ps7_init' command is executed.
+00:25:15 INFO  : 'ps7_post_config' command is executed.
+00:25:15 INFO  : Context for processor 'ps7_cortexa9_0' is selected.
+00:25:15 INFO  : Processor reset is completed for 'ps7_cortexa9_0'.
+00:25:15 INFO  : Context for processor 'ps7_cortexa9_0' is selected.
+00:25:15 INFO  : The application 'C:/Projects/EmbeddedVision/SDK/img_processing/Debug/img_processing.elf' is downloaded to processor 'ps7_cortexa9_0'.
+00:25:15 INFO  : 'configparams force-mem-access 0' command is executed.
+00:25:15 INFO  : ----------------XSDB Script----------------
+connect -url tcp:127.0.0.1:3121
+source C:/Projects/EmbeddedVision/hw_export/ps7_init.tcl
+targets -set -nocase -filter {name =~"APU*" && jtag_cable_name =~ "Digilent Zed 210248781021"} -index 0
+loadhw -hw C:/Projects/EmbeddedVision/hw_export/system.hdf -mem-ranges [list {0x40000000 0xbfffffff}]
+configparams force-mem-access 1
+targets -set -nocase -filter {name =~"APU*" && jtag_cable_name =~ "Digilent Zed 210248781021"} -index 0
+stop
+ps7_init
+ps7_post_config
+targets -set -nocase -filter {name =~ "ARM*#0" && jtag_cable_name =~ "Digilent Zed 210248781021"} -index 0
+rst -processor
+targets -set -nocase -filter {name =~ "ARM*#0" && jtag_cable_name =~ "Digilent Zed 210248781021"} -index 0
+dow C:/Projects/EmbeddedVision/SDK/img_processing/Debug/img_processing.elf
+configparams force-mem-access 0
+----------------End of Script----------------
+
+00:25:15 INFO  : Memory regions updated for context APU
+00:25:15 INFO  : Context for processor 'ps7_cortexa9_0' is selected.
+00:25:15 INFO  : 'con' command is executed.
+00:25:15 INFO  : ----------------XSDB Script (After Launch)----------------
+targets -set -nocase -filter {name =~ "ARM*#0" && jtag_cable_name =~ "Digilent Zed 210248781021"} -index 0
+con
+----------------End of Script----------------
+
+00:25:15 INFO  : Launch script is exported to file 'C:\Projects\EmbeddedVision\SDK\.sdk\launch_scripts\xilinx_c-c++_application_(system_debugger)\system_debugger_using_debug_img_processing.elf_on_local.tcl'

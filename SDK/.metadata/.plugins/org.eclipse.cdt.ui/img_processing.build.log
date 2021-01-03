@@ -1,8 +1,80 @@
-16:33:38 **** Incremental Build of configuration Debug for project img_processing ****
+10:12:22 **** Auto Build of configuration Debug for project img_processing ****
 make pre-build main-build 
 a9-linaro-pre-build-step
 ' '
-make: Für das Ziel »main-build« ist nichts zu tun.
+'Building file: ../src/webserver.c'
+'Invoking: ARM v7 gcc compiler'
+arm-none-eabi-gcc -Wall -O0 -g3 -I"C:\Projects\EmbeddedVision\SDK\img_processing\inc" -c -fmessage-length=0 -MT"src/webserver.o" -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -I../../standalone_bsp/ps7_cortexa9_0/include -MMD -MP -MF"src/webserver.d" -MT"src/webserver.o" -o "src/webserver.o" "../src/webserver.c"
+../src/webserver.c: In function 'http_404':
+../src/webserver.c:67:36: warning: pointer targets in passing argument 1 of 'generate_http_header' differ in signedness [-Wpointer-sign]
+  header_len = generate_http_header(buf, len, "html");
+                                    ^~~
+In file included from ../src/webserver.c:44:0:
+C:\Projects\EmbeddedVision\SDK\img_processing\inc/helpers.h:32:5: note: expected 'unsigned char *' but argument is of type 'char *'
+ int generate_http_header(unsigned char *buf, int fsize, unsigned char* type);
+     ^~~~~~~~~~~~~~~~~~~~
+../src/webserver.c:67:46: warning: pointer targets in passing argument 3 of 'generate_http_header' differ in signedness [-Wpointer-sign]
+  header_len = generate_http_header(buf, len, "html");
+                                              ^~~~~~
+In file included from ../src/webserver.c:44:0:
+C:\Projects\EmbeddedVision\SDK\img_processing\inc/helpers.h:32:5: note: expected 'unsigned char *' but argument is of type 'char *'
+ int generate_http_header(unsigned char *buf, int fsize, unsigned char* type);
+     ^~~~~~~~~~~~~~~~~~~~
+../src/webserver.c: In function 'gen_http_get_response':
+../src/webserver.c:261:57: warning: pointer targets in passing argument 3 of 'generate_http_header' differ in signedness [-Wpointer-sign]
+  header_len = generate_http_header(char_buf, file_size, fileType);
+                                                         ^~~~~~~~
+In file included from ../src/webserver.c:44:0:
+C:\Projects\EmbeddedVision\SDK\img_processing\inc/helpers.h:32:5: note: expected 'unsigned char *' but argument is of type 'char *'
+ int generate_http_header(unsigned char *buf, int fsize, unsigned char* type);
+     ^~~~~~~~~~~~~~~~~~~~
+../src/webserver.c:278:4: warning: 'return' with no value, in function returning non-void
+    return;
+    ^~~~~~
+../src/webserver.c:98:5: note: declared here
+ int gen_http_get_response(struct tcp_pcb *pcb, char *req, int rlen)
+     ^~~~~~~~~~~~~~~~~~~~~
+../src/webserver.c:281:33: warning: pointer targets in passing argument 2 of 'mfs_file_read' differ in signedness [-Wpointer-sign]
+   num_bytes = mfs_file_read(fd, char_buf, BUFSIZE);
+                                 ^~~~~~~~
+In file included from ../../standalone_bsp/ps7_cortexa9_0/include/mfs_config.h:42:0,
+                 from C:\Projects\EmbeddedVision\SDK\img_processing\inc/webserver.h:23,
+                 from ../src/webserver.c:43:
+../../standalone_bsp/ps7_cortexa9_0/include/xilmfs.h:284:5: note: expected 'char *' but argument is of type 'unsigned char *'
+ int mfs_file_read(int fd, char *buf, int buflen) ;
+     ^~~~~~~~~~~~~
+../src/webserver.c:110:6: warning: unused variable 'select' [-Wunused-variable]
+  int select = 0; // 0 for index, 1 for other files (css, html, js, ...)
+      ^~~~~~
+../src/webserver.c:109:6: warning: unused variable 'count' [-Wunused-variable]
+  int count = 0;
+      ^~~~~
+../src/webserver.c: In function 'http_rx':
+../src/webserver.c:382:3: warning: 'return' with no value, in function returning non-void
+   return;
+   ^~~~~~
+../src/webserver.c:368:7: note: declared here
+ err_t http_rx(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
+       ^~~~~~~
+../src/webserver.c:386:3: warning: 'return' with no value, in function returning non-void
+   return;
+   ^~~~~~
+../src/webserver.c:368:7: note: declared here
+ err_t http_rx(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err)
+       ^~~~~~~
+'Finished building: ../src/webserver.c'
+' '
+'Building target: img_processing.elf'
+'Invoking: ARM v7 gcc linker'
+arm-none-eabi-gcc -mcpu=cortex-a9 -mfpu=vfpv3 -mfloat-abi=hard -Wl,-build-id=none -specs=Xilinx.spec -Wl,-T -Wl,../src/lscript.ld -L../../standalone_bsp/ps7_cortexa9_0/lib -o "img_processing.elf"  ./src/echo.o ./src/helpers.o ./src/img_processing.o ./src/main.o ./src/platform_zynq.o ./src/webserver.o   -Wl,--start-group,-lxil,-lgcc,-lc,--end-group -Wl,--start-group,-lxil,-llwip4,-lgcc,-lc,--end-group
+'Finished building target: img_processing.elf'
+' '
+'Invoking: ARM v7 Print Size'
+arm-none-eabi-size img_processing.elf  |tee "img_processing.elf.size"
+   text	   data	    bss	    dec	    hex	filename
+ 176836	   4232	2152752	2333820	 239c7c	img_processing.elf
+'Finished building: img_processing.elf.size'
+' '
 
-16:33:38 Build Finished (took 202ms)
+10:12:24 Build Finished (took 1s.748ms)
 
